@@ -12,18 +12,21 @@ export const messageForwarder = async (message: any, USERNAME: string) => {
       // if you want to forward only DMs
       return;
     }
+    if (USERNAME === message.author.username) return;
+    // 📜 ${MsgType} -> ${USERNAME}
     const forwardMessage = `
-📜 ${MsgType} -> ${USERNAME}
+📜 ${USERNAME}
 From: ${message.author.globalName} ( ${message.author.username} )
 
 ${message.content}
     `;
 
-    await telegramBot.sendMessage(CHANNEL_ID, forwardMessage);
+    const bot = telegramBot();
+    await bot.sendMessage(CHANNEL_ID, forwardMessage);
 
     if (message.attachments.size > 0) {
       for (const [_, attachment] of message.attachments) {
-        await telegramBot.sendDocument(CHANNEL_ID, attachment.url);
+        await bot.sendDocument(CHANNEL_ID, attachment.url);
       }
     }
   } catch (error) {
