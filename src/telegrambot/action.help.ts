@@ -1,4 +1,4 @@
-const strHelpContent = "this is help text";
+import { strHelpContent } from "../config/config";
 
 export const HelpAction = async (msg: any, bot: any) => {
   const chatId = msg.chat.id;

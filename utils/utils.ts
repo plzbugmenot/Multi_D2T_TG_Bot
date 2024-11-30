@@ -1,6 +1,7 @@
 import { discordClient_1, discordClient_2, telegramBot } from "..";
 import {
   CHANNEL_ID,
+  statusMap,
   USER_TOKEN_1,
   USER_TOKEN_2,
 } from "../src/config/config";
@@ -51,3 +52,19 @@ export const startDiscordClient = async (Number: number) => {
     process.exit(1);
   }
 };
+
+export const normalizeString = (str: string) => {
+  return str
+    .replace(/\s+/g, " ") // Convert multiple spaces to single space
+    .replace(/\n+/g, "\n") // Normalize newlines
+    .trim(); // Remove leading/trailing whitespace
+};
+
+export const getStatusEmoji = (isActive: boolean): string =>
+  isActive ? "✅" : "❌";
+
+type ValidStatusKeys = "0" | "1" | "2" | "3";
+
+export function isValidStatus(status: string): status is ValidStatusKeys {
+  return status in statusMap;
+}

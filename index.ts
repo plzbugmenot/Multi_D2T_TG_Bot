@@ -4,10 +4,17 @@ import logger from "./utils/logger";
 import {
   BOT_TOKEN,
   BotMenu,
+  statusMap,
   strInvalidValue,
   strPlzSet,
 } from "./src/config/config";
-import { messageForwarder, startDiscordClient } from "./utils/utils";
+import {
+  getStatusEmoji,
+  isValidStatus,
+  messageForwarder,
+  normalizeString,
+  startDiscordClient,
+} from "./utils/utils";
 import { SetAction } from "./src/telegrambot/action.set";
 import { StatusAction } from "./src/telegrambot/action.status";
 import { HelpAction } from "./src/telegrambot/action.help";
@@ -65,52 +72,30 @@ const TelegramBotStart = async () => {
         const replyMsg = msg.text;
         const channelId = msg.chat.id;
 
-        if (originalMsg === strPlzSet) {
-          switch (replyMsg) {
-            case "0":
-              setMonitorUser(1, false);
-              setMonitorUser(2, false);
-              bot.sendMessage(
-                channelId,
-                `🔔 Changed Status\n\n❌ USER 1: ${USERNAME_1}\n❌ USER 2: ${USERNAME_2}`
-              );
-              break;
-            case "1":
-              setMonitorUser(1, true);
-              setMonitorUser(2, false);
-              bot.sendMessage(
-                channelId,
-                `🔔 Changed Status\n\n✅ USER 1: ${USERNAME_1}\n❌ USER 2: ${USERNAME_2}`
-              );
-              break;
-            case "2":
-              setMonitorUser(1, false);
-              setMonitorUser(2, true);
-              bot.sendMessage(
-                channelId,
-                `🔔 Changed Status\n\n❌ USER 1: ${USERNAME_1}\n✅ USER 2: ${USERNAME_2}`
-              );
-              break;
-            case "3":
-              setMonitorUser(1, true);
-              setMonitorUser(2, true);
-              bot.sendMessage(
-                channelId,
-                `🔔 Changed Status\n\n✅ USER 1: ${USERNAME_1}\n✅ USER 2: ${USERNAME_2}`
-              );
-              break;
-            default:
-              await bot.sendMessage(channelId, strInvalidValue);
-              break;
+        const pattern = /📜 ([\w_]+)[\s\S]*?\( ?([\w_]+) ?\)/;
+        const matches = originalMsg.match(pattern);
+        if (normalizeString(originalMsg) === normalizeString(strPlzSet)) {
+          if (isValidStatus(replyMsg)) {
+            const status = statusMap[replyMsg];
+            setMonitorUser(1, status.user1);
+            setMonitorUser(2, status.user2);
+
+            const emoji1 = getStatusEmoji(status.user1);
+            const emoji2 = getStatusEmoji(status.user2);
+
+            await bot.sendMessage(
+              channelId,
+              `🔔 Changed Status\n\n${emoji1} USER 1: ${USERNAME_1}\n${emoji2} USER 2: ${USERNAME_2}`
+            );
+          } else {
+            await bot.sendMessage(channelId, strInvalidValue);
           }
         }
 
         // Extract both usernames
-        const pattern = /📜 ([\w_]+)[\s\S]*?\( ?([\w_]+) ?\)/;
-        const matches = originalMsg.match(pattern);
-        if (matches) {
-          const clientUsername = matches[1]; // _neversmile_
-          const senderUsername = matches[2]; // forever_774
+        else if (matches) {
+          const clientUsername = matches[1];
+          const senderUsername = matches[2];
           const discordClient =
             clientUsername === USERNAME_1 ? discordClient_1 : discordClient_2;
 
@@ -123,6 +108,8 @@ const TelegramBotStart = async () => {
           if (user) {
             await user.send(replyMsg);
           }
+        } else {
+          await bot.sendMessage(channelId, strInvalidValue);
         }
       }
     });

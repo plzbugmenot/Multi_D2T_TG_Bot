@@ -36,7 +36,10 @@ export const strNoPermition = "🚫 You do not have permission.";
 export const strInvalidValue = "❗ Invalid value entered";
 
 export const strPlzSet = `
-⚙️ Please set the user to monitor:
+⚙️Please set the user to monitor:
+`;
+export const strHelpContent = `
+❓ Help
 
 0: ❌ USER 1, ❌ USER 2
 
@@ -46,3 +49,10 @@ export const strPlzSet = `
 
 3: ✅ USER 1, ✅ USER 2
 `;
+//
+export const statusMap = {
+  "0": { user1: false, user2: false },
+  "1": { user1: true, user2: false },
+  "2": { user1: false, user2: true },
+  "3": { user1: true, user2: true }
+};
