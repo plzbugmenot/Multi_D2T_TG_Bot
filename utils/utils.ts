@@ -1,5 +1,9 @@
 import { discordClient_1, discordClient_2, telegramBot } from "..";
-import { CHANNEL_ID, USER_TOKEN_1, USER_TOKEN_2 } from "./config";
+import {
+  CHANNEL_ID,
+  USER_TOKEN_1,
+  USER_TOKEN_2,
+} from "../src/config/config";
 import logger from "./logger";
 
 export const messageForwarder = async (message: any, USERNAME: string) => {
