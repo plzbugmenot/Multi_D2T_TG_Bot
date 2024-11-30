@@ -6,6 +6,7 @@ import {
   BotMenu,
   statusMap,
   strInvalidValue,
+  strNotAllowFile,
   strPlzSet,
 } from "./src/config/config";
 import {
@@ -18,6 +19,7 @@ import {
 import { SetAction } from "./src/telegrambot/action.set";
 import { StatusAction } from "./src/telegrambot/action.status";
 import { HelpAction } from "./src/telegrambot/action.help";
+import { ErrorCode } from "./utils/error.handle";
 
 // Access environment variables
 const TELEGRAM_BOT_TOKEN = BOT_TOKEN;
@@ -32,11 +34,8 @@ let USERNAME_1 = "";
 let USERNAME_2 = "";
 
 export const getUserName = (num: number) => {
-  if (num === 1) {
-    return USERNAME_1;
-  } else {
-    return USERNAME_2;
-  }
+  if (num === 1) return USERNAME_1;
+  else return USERNAME_2;
 };
 
 // Start Telegram bot
@@ -45,22 +44,20 @@ let MonitorUSER_1 = true;
 let MonitorUSER_2 = true;
 
 export const setMonitorUser = (num: number, value: boolean) => {
-  if (num === 1) {
-    MonitorUSER_1 = value;
-  } else {
-    MonitorUSER_2 = value;
-  }
+  if (num === 1) MonitorUSER_1 = value;
+  else MonitorUSER_2 = value;
 };
+
 export const getMonitorUser = (num: number) => {
-  if (num === 1) {
-    return MonitorUSER_1;
-  } else {
-    return MonitorUSER_2;
-  }
+  if (num === 1) return MonitorUSER_1;
+  else return MonitorUSER_2;
 };
 
 const TelegramBotStart = async () => {
-  if (!TELEGRAM_BOT_TOKEN) return;
+  if (!TELEGRAM_BOT_TOKEN) {
+    logger.error(ErrorCode.BOT_TOKEN_NOT_FOUND);
+    return;
+  }
   try {
     bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
     bot.setMyCommands(BotMenu);
@@ -83,12 +80,20 @@ const TelegramBotStart = async () => {
             const emoji1 = getStatusEmoji(status.user1);
             const emoji2 = getStatusEmoji(status.user2);
 
-            await bot.sendMessage(
-              channelId,
-              `🔔 Changed Status\n\n${emoji1} USER 1: ${USERNAME_1}\n${emoji2} USER 2: ${USERNAME_2}`
-            );
+            try {
+              await bot.sendMessage(
+                channelId,
+                `🔔 Changed Status\n\n${emoji1} USER 1: ${USERNAME_1}\n${emoji2} USER 2: ${USERNAME_2}`
+              );
+            } catch (error) {
+              logger.error(ErrorCode.MESSAGE_SET_ACTION, error);
+            }
           } else {
-            await bot.sendMessage(channelId, strInvalidValue);
+            try {
+              await bot.sendMessage(channelId, strInvalidValue);
+            } catch (error) {
+              logger.error(ErrorCode.MESSAGE_INVALID_VALUE, error);
+            }
           }
         }
 
@@ -105,11 +110,23 @@ const TelegramBotStart = async () => {
           const user = await discordClient.users.cache.find(
             (user: any) => user.username === senderUsername
           );
-          if (user) {
-            await user.send(replyMsg);
+
+          try {
+            if (!replyMsg) bot.sendMessage(channelId, strNotAllowFile);
+            else if (user) {
+              await user.send(replyMsg);
+            }
+  
+          } catch (error) {
+            logger.error(ErrorCode.MESSAGE_NOT_ALLOW_FILE, error)            
           }
         } else {
-          await bot.sendMessage(channelId, strInvalidValue);
+          try {
+            await bot.sendMessage(channelId, strInvalidValue);
+
+          } catch (error) {
+            logger.error(ErrorCode.MESSAGE_SEND_FAILED, error)            
+          }
         }
       }
     });
@@ -133,7 +150,7 @@ const TelegramBotStart = async () => {
 
     logger.info("📳 Telegram Bot started successfully");
   } catch (error) {
-    logger.error("Telegram Bot is running error", error);
+    logger.error(ErrorCode.BOT_STARTUP_FAILED, error);
   }
 };
 
@@ -164,14 +181,14 @@ async function main() {
     await startDiscordClient(2);
 
     process.on("uncaughtException", (error) => {
-      logger.error("Uncaught Exception:", error);
+      logger.error(ErrorCode.UNCAUGHTEXCEPTION, error);
     });
 
     process.on("unhandledRejection", (error) => {
-      logger.error("Unhandled Rejection:", error);
+      logger.error(ErrorCode.UNHANDLEDREJECTION, error);
     });
   } catch (error) {
-    logger.error("Error in main:", error);
+    logger.error(ErrorCode.ERRORINMAIN, error);
     process.exit(1);
   }
 }

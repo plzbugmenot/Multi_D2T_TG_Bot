@@ -5,6 +5,7 @@ import {
   USER_TOKEN_1,
   USER_TOKEN_2,
 } from "../src/config/config";
+import { ErrorCode } from "./error.handle";
 import logger from "./logger";
 
 export const messageForwarder = async (message: any, USERNAME: string) => {
@@ -27,15 +28,23 @@ ${message.content}
     `;
 
     const bot = telegramBot();
-    await bot.sendMessage(CHANNEL_ID, forwardMessage);
+    try {
+      await bot.sendMessage(CHANNEL_ID, forwardMessage);
+    } catch (error) {
+      logger.error(ErrorCode.MESSAGE_FORWARD, error);
+    }
 
     if (message.attachments.size > 0) {
       for (const [_, attachment] of message.attachments) {
-        await bot.sendDocument(CHANNEL_ID, attachment.url);
+        try {
+          await bot.sendDocument(CHANNEL_ID, attachment.url);
+        } catch (error) {
+          logger.error(ErrorCode.MESSAGE_FORWARD_ATTACHMENT, error);
+        }
       }
     }
   } catch (error) {
-    logger.error(`Error processing message: ${error}`);
+    logger.error(ErrorCode.PROCESSING_MESSAGE, error);
   }
 };
 
@@ -48,7 +57,7 @@ export const startDiscordClient = async (Number: number) => {
     logger.info(`🤖 Discord client ${Number} started successfully`);
     if (Number === 2) console.log("✨ All Discord clients are running...");
   } catch (err: any) {
-    logger.error("Error starting Discord client:", err);
+    logger.error(ErrorCode.DISCORD_AUTH_FAILED, err);
     process.exit(1);
   }
 };

@@ -34,6 +34,7 @@ export const HTML_MODE = { parse_mode: "HTML" };
 
 export const strNoPermition = "🚫 You do not have permission.";
 export const strInvalidValue = "❗ Invalid value entered";
+export const strNotAllowFile = "🚫 You are not allowed to send files.";
 
 export const strPlzSet = `
 ⚙️Please set the user to monitor:
