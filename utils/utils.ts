@@ -1,7 +1,6 @@
-import { discordClient_1, discordClient_2, telegramBot } from "..";
+import { discordClient_1, discordClient_2, getMonitorUser, telegramBot } from "..";
 import {
   CHANNEL_ID,
-  statusMap,
   USER_TOKEN_1,
   USER_TOKEN_2,
 } from "../src/config/config";
@@ -14,10 +13,8 @@ export const messageForwarder = async (message: any, USERNAME: string) => {
       ? `${message.guild?.name} >> ${message.channel.name}`
       : "DM";
 
-    if (MsgType !== "DM") {
-      // if you want to forward only DMs
-      return;
-    }
+    if (MsgType !== "DM") return; // forward only DMs
+
     if (USERNAME === message.author.username) return;
     // 📜 ${MsgType} -> ${USERNAME}
     const forwardMessage = `
@@ -48,12 +45,35 @@ ${message.content}
   }
 };
 
+interface DMUser {
+  id: string;
+  username: string;
+  lastMessage?: string;
+  lastMessageTime?: Date;
+}
 export const startDiscordClient = async (Number: number) => {
   const discordClient = Number === 1 ? discordClient_1 : discordClient_2;
   const DISCORD_USER_TOKEN = Number === 1 ? USER_TOKEN_1 : USER_TOKEN_2;
   try {
     console.log(`Starting Discord client ${Number}... `);
     await discordClient.login(DISCORD_USER_TOKEN);
+
+    // const relationships = discordClient.relationships.friendCache;
+    // for (const item of relationships) console.log("Channel:", item);
+    // const dmUsers: DMUser[] = dmChannels.map(
+    //   (channel) => (
+    //     console.log("Channel:", channel),
+    //     {
+    //       id: channel.recipient?.id || "",
+    //       username: channel.recipient?.username || "",
+    //       lastMessage: channel.lastMessage?.content,
+    //       lastMessageTime: channel.lastMessage?.createdAt,
+    //     }
+    //   )
+    // );
+
+    // console.log("Your DM Users:", dmUsers);
+
     logger.info(`🤖 Discord client ${Number} started successfully`);
     if (Number === 2) console.log("✨ All Discord clients are running...");
   } catch (err: any) {
@@ -62,18 +82,9 @@ export const startDiscordClient = async (Number: number) => {
   }
 };
 
-export const normalizeString = (str: string) => {
-  return str
-    .replace(/\s+/g, " ") // Convert multiple spaces to single space
-    .replace(/\n+/g, "\n") // Normalize newlines
-    .trim(); // Remove leading/trailing whitespace
+
+export const getButtonText = (num: number) => {
+  const btnstate = getMonitorUser(num);
+  const emoji = btnstate ? "✅" : "❌";
+  return `USER ${num}: ${emoji}`;
 };
-
-export const getStatusEmoji = (isActive: boolean): string =>
-  isActive ? "✅" : "❌";
-
-type ValidStatusKeys = "0" | "1" | "2" | "3";
-
-export function isValidStatus(status: string): status is ValidStatusKeys {
-  return status in statusMap;
-}

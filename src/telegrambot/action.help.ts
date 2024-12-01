@@ -1,7 +1,13 @@
+import { ErrorCode } from "../../utils/error.handle";
+import logger from "../../utils/logger";
 import { strHelpContent } from "../config/config";
 
 export const HelpAction = async (msg: any, bot: any) => {
-  const chatId = msg.chat.id;
+  try {
+    const chatId = msg.chat.id;
 
-  await bot.sendMessage(chatId, strHelpContent);
+    await bot.sendMessage(chatId, strHelpContent);
+  } catch (error) {
+    logger.error(ErrorCode.HELPACTION_ERROR, error);
+  }
 };

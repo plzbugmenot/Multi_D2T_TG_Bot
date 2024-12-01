@@ -11,10 +11,9 @@ export const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID || -1002340692403;
 
 export const BotMenu = [
   {
-    command: "set",
+    command: "setting",
     description: "⚙️ Monitoring Discord Account",
   },
-  { command: "status", description: "📋 Current Monitoring status" },
   { command: "help", description: "❓ Help" },
 ];
 
@@ -36,24 +35,9 @@ export const strNoPermition = "🚫 You do not have permission.";
 export const strInvalidValue = "❗ Invalid value entered";
 export const strNotAllowFile = "🚫 You are not allowed to send files.";
 
-export const strPlzSet = `
-⚙️Please set the user to monitor:
-`;
-export const strHelpContent = `
-❓ Help
+export const strPlzSet = `⚙️Please set the user to monitor:`;
+export const strHelpContent = `❓ Help`;
 
-0: ❌ USER 1, ❌ USER 2
-
-1: ✅ USER 1, ❌ USER 2
-
-2: ❌ USER 1, ✅ USER 2
-
-3: ✅ USER 1, ✅ USER 2
-`;
-//
-export const statusMap = {
-  "0": { user1: false, user2: false },
-  "1": { user1: true, user2: false },
-  "2": { user1: false, user2: true },
-  "3": { user1: true, user2: true }
-};
+export const TOGGLE_FIRST = "Toggle_First";
+export const TOGGLE_SECOND = "Toggle_Second";
+export const CLOSE = "CLOSE"

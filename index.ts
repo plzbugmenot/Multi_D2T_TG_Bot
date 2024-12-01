@@ -4,20 +4,18 @@ import logger from "./utils/logger";
 import {
   BOT_TOKEN,
   BotMenu,
-  statusMap,
+  CLOSE,
   strInvalidValue,
   strNotAllowFile,
-  strPlzSet,
+  TOGGLE_FIRST,
+  TOGGLE_SECOND,
 } from "./src/config/config";
 import {
-  getStatusEmoji,
-  isValidStatus,
+  getButtonText,
   messageForwarder,
-  normalizeString,
   startDiscordClient,
 } from "./utils/utils";
 import { SetAction } from "./src/telegrambot/action.set";
-import { StatusAction } from "./src/telegrambot/action.status";
 import { HelpAction } from "./src/telegrambot/action.help";
 import { ErrorCode } from "./utils/error.handle";
 
@@ -71,34 +69,9 @@ const TelegramBotStart = async () => {
 
         const pattern = /📜 ([\w_]+)[\s\S]*?\( ?([\w_]+) ?\)/;
         const matches = originalMsg.match(pattern);
-        if (normalizeString(originalMsg) === normalizeString(strPlzSet)) {
-          if (isValidStatus(replyMsg)) {
-            const status = statusMap[replyMsg];
-            setMonitorUser(1, status.user1);
-            setMonitorUser(2, status.user2);
-
-            const emoji1 = getStatusEmoji(status.user1);
-            const emoji2 = getStatusEmoji(status.user2);
-
-            try {
-              await bot.sendMessage(
-                channelId,
-                `🔔 Changed Status\n\n${emoji1} USER 1: ${USERNAME_1}\n${emoji2} USER 2: ${USERNAME_2}`
-              );
-            } catch (error) {
-              logger.error(ErrorCode.MESSAGE_SET_ACTION, error);
-            }
-          } else {
-            try {
-              await bot.sendMessage(channelId, strInvalidValue);
-            } catch (error) {
-              logger.error(ErrorCode.MESSAGE_INVALID_VALUE, error);
-            }
-          }
-        }
 
         // Extract both usernames
-        else if (matches) {
+        if (matches) {
           const clientUsername = matches[1];
           const senderUsername = matches[2];
           const discordClient =
@@ -116,16 +89,14 @@ const TelegramBotStart = async () => {
             else if (user) {
               await user.send(replyMsg);
             }
-  
           } catch (error) {
-            logger.error(ErrorCode.MESSAGE_NOT_ALLOW_FILE, error)            
+            logger.error(ErrorCode.MESSAGE_NOT_ALLOW_FILE, error);
           }
         } else {
           try {
             await bot.sendMessage(channelId, strInvalidValue);
-
           } catch (error) {
-            logger.error(ErrorCode.MESSAGE_SEND_FAILED, error)            
+            logger.error(ErrorCode.MESSAGE_SEND_FAILED, error);
           }
         }
       }
@@ -136,16 +107,55 @@ const TelegramBotStart = async () => {
       // console.log("start cmd");
     });
 
-    bot.onText(/\/set/, async (msg: any) => {
+    bot.onText(/\/setting/, async (msg: any) => {
       SetAction(msg, bot);
-    });
-
-    bot.onText(/\/status/, async (msg: any) => {
-      StatusAction(msg, bot);
     });
 
     bot.onText(/\/help/, async (msg: any) => {
       HelpAction(msg, bot);
+    });
+
+    // Handle button clicks
+    bot.on("callback_query", async (query: any) => {
+      const chatId = query.message.chat.id;
+      const messageId = query.message.message_id;
+
+      switch (query.data) {
+        case TOGGLE_FIRST:
+          setMonitorUser(1, !MonitorUSER_1);
+          break;
+        case TOGGLE_SECOND:
+          setMonitorUser(2, !MonitorUSER_2);
+          break;
+        case CLOSE:
+          await bot.deleteMessage(chatId, messageId);
+          return;
+      }
+
+      const updatedKeyboard = {
+        inline_keyboard: [
+          [
+            {
+              text: getButtonText(1),
+              callback_data: TOGGLE_FIRST,
+            },
+            {
+              text: getButtonText(2),
+              callback_data: TOGGLE_SECOND,
+            },
+          ],
+          [{ text: "❌ Close", callback_data: CLOSE }],
+        ],
+      };
+
+      try {
+        await bot.editMessageReplyMarkup(updatedKeyboard, {
+          chat_id: chatId,
+          message_id: messageId,
+        });
+      } catch (error) {
+        logger.error(ErrorCode.CALLBACK_MESSAGE_ERROR, error);
+      }
     });
 
     logger.info("📳 Telegram Bot started successfully");
@@ -156,7 +166,6 @@ const TelegramBotStart = async () => {
 
 // Discord event handlers
 discordClient_1.on("ready", () => {
-  // logger.info(`Logged in as ${discordClient_1.user?.tag}`);
   USERNAME_1 = discordClient_1.user?.tag || "";
 });
 
@@ -165,7 +174,6 @@ discordClient_1.on("messageCreate", async (message: any) => {
 });
 
 discordClient_2.on("ready", () => {
-  // logger.info(`Logged in as ${discordClient_2.user?.tag}`);
   USERNAME_2 = discordClient_2.user?.tag || "A";
 });
 
